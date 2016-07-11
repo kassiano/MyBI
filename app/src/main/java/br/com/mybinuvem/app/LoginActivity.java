@@ -5,9 +5,11 @@ import android.animation.AnimatorListenerAdapter;
 import android.annotation.TargetApi;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
 import android.view.KeyEvent;
@@ -18,6 +20,7 @@ import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import br.com.mybinuvem.app.helper.HttpRequest;
 import br.com.mybinuvem.app.helper.WebHttpRequest;
@@ -40,6 +43,7 @@ public class LoginActivity extends AppCompatActivity {
     private View mProgressView;
     private View mLoginFormView;
     private Context context;
+    SharedPreferences preferences;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -50,6 +54,11 @@ public class LoginActivity extends AppCompatActivity {
         mEmpresa = (EditText) findViewById(R.id.empresa);
 
         context = this;
+        preferences = PreferenceManager.getDefaultSharedPreferences(context);
+
+        String loginStored = preferences.getString("loginStored", "");
+        String senhaStored = preferences.getString("senhaStored", "");
+        String empresaStored = preferences.getString("empresaStored", "");
 
         mPasswordView = (EditText) findViewById(R.id.password);
         mPasswordView.setOnEditorActionListener(new TextView.OnEditorActionListener() {
@@ -71,6 +80,12 @@ public class LoginActivity extends AppCompatActivity {
             }
         });
 
+
+        mEmailView.setText(loginStored);
+        mEmpresa.setText(empresaStored);
+        mPasswordView.setText(senhaStored);
+
+
         mLoginFormView = findViewById(R.id.login_form);
         mProgressView = findViewById(R.id.login_progress);
     }
@@ -91,6 +106,7 @@ public class LoginActivity extends AppCompatActivity {
         // Reset errors.
         mEmailView.setError(null);
         mPasswordView.setError(null);
+        mEmpresa.setError(null);
 
         // Store values at the time of the login attempt.
         String email = mEmailView.getText().toString();
@@ -115,6 +131,13 @@ public class LoginActivity extends AppCompatActivity {
         } else if (!isEmailValid(email)) {
             mEmailView.setError(getString(R.string.error_invalid_email));
             focusView = mEmailView;
+            cancel = true;
+        }
+
+        // Check for a valid empresa
+        if (TextUtils.isEmpty(empresa)) {
+            mEmpresa.setError(getString(R.string.error_field_required));
+            focusView = mEmpresa;
             cancel = true;
         }
 
@@ -227,8 +250,12 @@ public class LoginActivity extends AppCompatActivity {
             showProgress(false);
 
 
-
             if (!success.isEmpty()) {
+
+                preferences.edit().putString("loginStored",mEmail).commit();
+                preferences.edit().putString("senhaStored",mPassword).commit();
+                preferences.edit().putString("empresaStored",mEmpresa).commit();
+
 
                 Intent intent = new Intent(context, PrincipalActivity.class);
                 intent.putExtra("url", success);
@@ -237,8 +264,9 @@ public class LoginActivity extends AppCompatActivity {
                 startActivity(intent);
 
             } else {
-                mPasswordView.setError(getString(R.string.error_incorrect_password));
-                mPasswordView.requestFocus();
+
+                Toast.makeText(context,"Dados de acesso inválidos", Toast.LENGTH_SHORT).show();
+
             }
         }
 
