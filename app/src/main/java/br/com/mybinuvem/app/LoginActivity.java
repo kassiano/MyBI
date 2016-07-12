@@ -18,6 +18,7 @@ import android.view.View.OnClickListener;
 import android.view.inputmethod.EditorInfo;
 import android.widget.AutoCompleteTextView;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -44,6 +45,7 @@ public class LoginActivity extends AppCompatActivity {
     private View mLoginFormView;
     private Context context;
     SharedPreferences preferences;
+    private CheckBox checkbox_store;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -52,6 +54,7 @@ public class LoginActivity extends AppCompatActivity {
         // Set up the login form.
         mEmailView = (AutoCompleteTextView) findViewById(R.id.email);
         mEmpresa = (EditText) findViewById(R.id.empresa);
+        checkbox_store = (CheckBox) findViewById(R.id.checkbox_store);
 
         context = this;
         preferences = PreferenceManager.getDefaultSharedPreferences(context);
@@ -59,6 +62,10 @@ public class LoginActivity extends AppCompatActivity {
         String loginStored = preferences.getString("loginStored", "");
         String senhaStored = preferences.getString("senhaStored", "");
         String empresaStored = preferences.getString("empresaStored", "");
+        boolean savelogin = preferences.getBoolean("saveLogin", false);
+
+        checkbox_store.setChecked(savelogin);
+
 
         mPasswordView = (EditText) findViewById(R.id.password);
         mPasswordView.setOnEditorActionListener(new TextView.OnEditorActionListener() {
@@ -252,10 +259,19 @@ public class LoginActivity extends AppCompatActivity {
 
             if (!success.isEmpty()) {
 
-                preferences.edit().putString("loginStored",mEmail).commit();
-                preferences.edit().putString("senhaStored",mPassword).commit();
-                preferences.edit().putString("empresaStored",mEmpresa).commit();
+                if(checkbox_store.isChecked()) {
 
+                    preferences.edit().putString("loginStored", mEmail).commit();
+                    preferences.edit().putString("senhaStored", mPassword).commit();
+                    preferences.edit().putString("empresaStored", mEmpresa).commit();
+
+                }else{
+                    preferences.edit().remove("loginStored").commit();
+                    preferences.edit().remove("senhaStored").commit();
+                    preferences.edit().remove("empresaStored").commit();
+                }
+
+                preferences.edit().putBoolean("saveLogin", checkbox_store.isChecked()).commit();
 
                 Intent intent = new Intent(context, PrincipalActivity.class);
                 intent.putExtra("url", success);

@@ -4,12 +4,17 @@ import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
+import android.webkit.WebChromeClient;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+
 
 import org.apache.http.util.EncodingUtils;
 
@@ -26,6 +31,7 @@ public class PrincipalActivity extends AppCompatActivity {
     boolean isLogginOut=false;
 
     boolean isLogin= true;
+    String login="",senha="";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -37,7 +43,7 @@ public class PrincipalActivity extends AppCompatActivity {
 
         Intent intent = getIntent();
 
-        String login="",senha="";
+
         if(intent!=null){
 
             LINKAPP = intent.getStringExtra("url");
@@ -56,6 +62,16 @@ public class PrincipalActivity extends AppCompatActivity {
 
         webView.setWebViewClient(new AppWebViewClients());
 
+        //webView.setWebChromeClient(new WebChromeClient());
+
+        /*
+        webView.setWebViewClient(new WebViewClient() {
+            @Override
+            public boolean shouldOverrideUrlLoading(WebView view, String url) {
+                return false;
+            }
+        });*/
+
         // webView.loadUrl("http://twitter.com/AdamSchefter/statuses/236553635608285184");
         webView.getSettings().setJavaScriptEnabled(true);
         webView.getSettings().setBuiltInZoomControls(true);
@@ -73,13 +89,20 @@ public class PrincipalActivity extends AppCompatActivity {
 
        // webView.getSettings().setUserAgentString("Mozilla/5.0 (Linux; U; Android 2.0; en-us; Droid Build/ESD20) AppleWebKit/530.17 (KHTML, like Gecko) Version/4.0 Mobile Safari/530.17");
 
-        webView.getSettings().setUserAgentString("Mozilla/5.0");
+        //webView.getSettings().setUserAgentString("Mozilla/5.0");
 
         String postData = String.format("login=%s&senha=%s", login, senha);
-        webView.postUrl(LINKAPP+"/login.aspx", EncodingUtils.getBytes(postData, "BASE64"));
 
 
-        //webView.loadUrl(LINKAPP);
+        Log.i("VERSAO",Build.VERSION.SDK_INT +"" );
+        if(Build.VERSION.SDK_INT < Build.VERSION_CODES.KITKAT){
+
+            webView.loadUrl(LINKAPP);
+        }else {
+
+            webView.postUrl(LINKAPP + "/login.aspx", EncodingUtils.getBytes(postData, "BASE64"));
+
+        }
 
     }
 
@@ -124,8 +147,7 @@ public class PrincipalActivity extends AppCompatActivity {
         @Override
         public boolean shouldOverrideUrlLoading(WebView view, String url) {
             // TODO Auto-generated method stub
-            view.loadUrl(url);
-            return true;
+            return false;
         }
 
         @Override
@@ -133,14 +155,34 @@ public class PrincipalActivity extends AppCompatActivity {
             // TODO Auto-generated method stub
             super.onPageFinished(view, url);
 
-            if(isShowing)
+            if(isShowing) {
                 progressBar.dismiss();
+                isShowing= false;
+            }
 
             if(view.getUrl().endsWith("login.aspx"))
             {
                 Intent intent = new Intent(context, LoginActivity.class);
                 startActivity(intent);
             }
+
+
+            if(isLogin && Build.VERSION.SDK_INT < Build.VERSION_CODES.KITKAT) {
+                Handler handler = new Handler();
+                handler.postDelayed(new Runnable() {
+                    public void run() {
+                        isLogin = false;
+                        // Actions to do after 10 seconds
+                        webView.loadUrl("javascript:document.getElementById('txtlogin').value='"+login+"';document.getElementById('txtsenha').value='"+senha+"';");
+                    }
+                }, 500);
+            }
+
+
+
+
+
+
 
             /*
             if(!isLogin) {
