@@ -4,19 +4,25 @@ import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
-import android.webkit.WebChromeClient;
+import android.view.View;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 
+import com.squareup.picasso.Picasso;
+import com.squareup.picasso.Target;
 
 import org.apache.http.util.EncodingUtils;
+
+import br.com.mybinuvem.app.model.DadosCliente;
 
 
 public class PrincipalActivity extends AppCompatActivity {
@@ -33,11 +39,13 @@ public class PrincipalActivity extends AppCompatActivity {
     boolean isLogin= true;
     String login="",senha="";
 
+    Toolbar toolbar;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_principal);
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
 
@@ -46,7 +54,16 @@ public class PrincipalActivity extends AppCompatActivity {
 
         if(intent!=null){
 
-            LINKAPP = intent.getStringExtra("url");
+            DadosCliente dados = (DadosCliente)intent.getSerializableExtra("dados");
+
+            setTitle(dados.getTitulo());
+
+
+            setIconImage(dados);
+
+
+
+            LINKAPP = dados.getUrl();
             login = intent.getStringExtra("login");
             senha = intent.getStringExtra("senha");
 
@@ -62,17 +79,7 @@ public class PrincipalActivity extends AppCompatActivity {
 
         webView.setWebViewClient(new AppWebViewClients());
 
-        //webView.setWebChromeClient(new WebChromeClient());
 
-        /*
-        webView.setWebViewClient(new WebViewClient() {
-            @Override
-            public boolean shouldOverrideUrlLoading(WebView view, String url) {
-                return false;
-            }
-        });*/
-
-        // webView.loadUrl("http://twitter.com/AdamSchefter/statuses/236553635608285184");
         webView.getSettings().setJavaScriptEnabled(true);
         webView.getSettings().setBuiltInZoomControls(true);
         webView.getSettings().setSupportZoom(true);
@@ -95,23 +102,16 @@ public class PrincipalActivity extends AppCompatActivity {
 
 
         Log.i("VERSAO",Build.VERSION.SDK_INT +"" );
-        if(Build.VERSION.SDK_INT < Build.VERSION_CODES.KITKAT){
 
-            webView.loadUrl(LINKAPP);
-        }else {
-
-            webView.postUrl(LINKAPP + "/login.aspx", EncodingUtils.getBytes(postData, "BASE64"));
-
-        }
+        webView.postUrl(LINKAPP, EncodingUtils.getBytes(postData, "BASE64"));
 
     }
 
+
     private void logout() {
 
-        webView.loadUrl(String.format("%s/%s", LINKAPP , LOGOUT));
-
-        isLogginOut = true;
-
+        Intent intent = new Intent(context, LoginActivity.class);
+        startActivity(intent);
     }
 
 
@@ -129,6 +129,40 @@ public class PrincipalActivity extends AppCompatActivity {
         super.onBackPressed();
     }
 
+
+    private void setIconImage(final DadosCliente dados){
+
+        Target target = new Target() {
+            @Override
+            public void onBitmapLoaded(final Bitmap bitmap, Picasso.LoadedFrom from) {
+                Log.d("HIYA", "onBitmapLoaded");
+                Bitmap b = Bitmap.createScaledBitmap(bitmap, 120, 120, false);
+                BitmapDrawable icon = new BitmapDrawable(toolbar.getResources(), b);
+                toolbar.setNavigationIcon(icon);
+            }
+
+            @Override
+            public void onBitmapFailed(Drawable errorDrawable) {
+                Log.d("HIYA", "onBitmapFailed");
+            }
+
+            @Override
+            public void onPrepareLoad(Drawable placeHolderDrawable) {
+                Log.d("HIYA", "onPrepareLoad");
+            }
+        };
+
+        Picasso.with(toolbar.getContext())
+                .load(dados.getImagem())
+                .into(target);
+
+
+    }
+
+
+
+
+
     public class AppWebViewClients extends WebViewClient {
 
 
@@ -142,6 +176,9 @@ public class PrincipalActivity extends AppCompatActivity {
                 progressBar = ProgressDialog.show(context, null, "Loading...");
                 isShowing=true;
             }
+
+
+            view.setVisibility(View.INVISIBLE);
         }
 
         @Override
@@ -155,60 +192,41 @@ public class PrincipalActivity extends AppCompatActivity {
             // TODO Auto-generated method stub
             super.onPageFinished(view, url);
 
-            if(isShowing) {
-                progressBar.dismiss();
-                isShowing= false;
-            }
+
 
             if(view.getUrl().endsWith("login.aspx"))
             {
-                Intent intent = new Intent(context, LoginActivity.class);
-                startActivity(intent);
+                logout();
+
+            }else{
+
+                view.setVisibility(View.VISIBLE);
+
+                if(isShowing) {
+                    progressBar.dismiss();
+                    isShowing= false;
+                }
+
             }
 
 
-            if(isLogin && Build.VERSION.SDK_INT < Build.VERSION_CODES.KITKAT) {
+            if(false){//isLogin && Build.VERSION.SDK_INT < Build.VERSION_CODES.KITKAT) {
                 Handler handler = new Handler();
                 handler.postDelayed(new Runnable() {
                     public void run() {
                         isLogin = false;
                         // Actions to do after 10 seconds
-                        webView.loadUrl("javascript:document.getElementById('txtlogin').value='"+login+"';document.getElementById('txtsenha').value='"+senha+"';");
+
+                        String script ="javascript:document.getElementById('txtlogin').value='"+login+"';document.getElementById('txtsenha').value='"+senha+"';";
+                        //script += "document.getElementById('form1').submit();";
+
+                        Log.i("SCRIPT", script);
+
+                        webView.loadUrl(script);
                     }
                 }, 500);
             }
 
-
-
-
-
-
-
-            /*
-            if(!isLogin) {
-                progressBar.dismiss();
-            }
-
-
-            if(isLogin) {
-                Handler handler = new Handler();
-                handler.postDelayed(new Runnable() {
-                    public void run() {
-                        isLogin = false;
-                        // Actions to do after 10 seconds
-                        webView.loadUrl("javascript:document.getElementById('txtlogin').value='kassiano';document.getElementById('txtsenha').value='kassiano';document.getElementById('ASPxButton1_I').click();");
-                    }
-                }, 1000);
-            }
-
-            //view.loadUrl("javascript:document.getElementById('txtlogin').value='kassiano';document.getElementById('txtsenha').value='kassiano';document.getElementById('ASPxButton1_I').click();");
-            //view.loadUrl("javascript:document.getElementById('txtlogin').value='kassiano';document.getElementById('txtsenha').value='kassiano';");
-
-            if(isLogginOut){
-                //Intent intent1 = new Intent(context, LoginActivity.class);
-                //startActivity(intent1);
-            }
-*/
         }
     }
 

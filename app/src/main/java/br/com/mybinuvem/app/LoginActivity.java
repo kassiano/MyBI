@@ -6,12 +6,16 @@ import android.annotation.TargetApi;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.Bitmap;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -22,9 +26,13 @@ import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
+import com.google.gson.Gson;
+import com.squareup.picasso.Picasso;
+import com.squareup.picasso.Target;
 
 import br.com.mybinuvem.app.helper.HttpRequest;
 import br.com.mybinuvem.app.helper.WebHttpRequest;
+import br.com.mybinuvem.app.model.DadosCliente;
 
 
 /**
@@ -62,6 +70,7 @@ public class LoginActivity extends AppCompatActivity {
         String loginStored = preferences.getString("loginStored", "");
         String senhaStored = preferences.getString("senhaStored", "");
         String empresaStored = preferences.getString("empresaStored", "");
+        String logoEmpresa =preferences.getString("logoEmpresa", "");
         boolean savelogin = preferences.getBoolean("saveLogin", false);
 
         checkbox_store.setChecked(savelogin);
@@ -95,6 +104,38 @@ public class LoginActivity extends AppCompatActivity {
 
         mLoginFormView = findViewById(R.id.login_form);
         mProgressView = findViewById(R.id.login_progress);
+
+
+        //http://52.11.74.228/img/analise-de-resultados-inicio.jpg
+
+        final View mainLayout = findViewById(R.id.mainLayout);
+
+
+
+        if(!logoEmpresa.isEmpty()){
+
+            Target target = new Target() {
+                @Override
+                public void onBitmapLoaded(final Bitmap bitmap, Picasso.LoadedFrom from) {
+                    mainLayout.setBackground(new BitmapDrawable(context.getResources(), bitmap));
+                }
+
+                @Override
+                public void onBitmapFailed(Drawable errorDrawable) {
+                    Log.d("HIYA", "onBitmapFailed");
+                }
+
+                @Override
+                public void onPrepareLoad(Drawable placeHolderDrawable) {
+                    Log.d("HIYA", "onPrepareLoad");
+                }
+            };
+
+            Picasso.with(this)
+                    .load(logoEmpresa)
+                    .into(target);
+
+        }
     }
 
 
@@ -259,6 +300,9 @@ public class LoginActivity extends AppCompatActivity {
 
             if (!success.isEmpty()) {
 
+                Gson g = new Gson();
+                DadosCliente dados = g.fromJson(success, DadosCliente.class);
+
                 if(checkbox_store.isChecked()) {
 
                     preferences.edit().putString("loginStored", mEmail).commit();
@@ -272,9 +316,10 @@ public class LoginActivity extends AppCompatActivity {
                 }
 
                 preferences.edit().putBoolean("saveLogin", checkbox_store.isChecked()).commit();
+                preferences.edit().putString("logoEmpresa", dados.getImagem()).commit();
 
                 Intent intent = new Intent(context, PrincipalActivity.class);
-                intent.putExtra("url", success);
+                intent.putExtra("dados", dados);
                 intent.putExtra("login", mEmail);
                 intent.putExtra("senha", mPassword);
                 startActivity(intent);
