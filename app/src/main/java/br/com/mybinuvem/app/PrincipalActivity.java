@@ -59,7 +59,8 @@ public class PrincipalActivity extends AppCompatActivity {
             setTitle(dados.getTitulo());
 
 
-            setIconImage(dados);
+            if(!dados.getImagem().isEmpty())
+                setIconImage(dados);
 
 
 
@@ -94,7 +95,7 @@ public class PrincipalActivity extends AppCompatActivity {
         webView.setScrollbarFadingEnabled(false);
 
 
-       // webView.getSettings().setUserAgentString("Mozilla/5.0 (Linux; U; Android 2.0; en-us; Droid Build/ESD20) AppleWebKit/530.17 (KHTML, like Gecko) Version/4.0 Mobile Safari/530.17");
+        //webView.getSettings().setUserAgentString("Mozilla/5.0 (Linux; U; Android 2.0; en-us; Droid Build/ESD20) AppleWebKit/530.17 (KHTML, like Gecko) Version/4.0 Mobile Safari/530.17");
 
         //webView.getSettings().setUserAgentString("Mozilla/5.0");
 
@@ -102,6 +103,14 @@ public class PrincipalActivity extends AppCompatActivity {
 
 
         Log.i("VERSAO",Build.VERSION.SDK_INT +"" );
+
+        if(!LINKAPP.startsWith("http"))
+            LINKAPP = "http://"+LINKAPP;
+
+        if(!LINKAPP.endsWith("/")){
+
+            LINKAPP+="/";
+        }
 
         webView.postUrl(LINKAPP, EncodingUtils.getBytes(postData, "BASE64"));
 
@@ -159,9 +168,7 @@ public class PrincipalActivity extends AppCompatActivity {
 
     }
 
-
-
-
+    
 
     public class AppWebViewClients extends WebViewClient {
 
@@ -180,6 +187,7 @@ public class PrincipalActivity extends AppCompatActivity {
 
             view.setVisibility(View.INVISIBLE);
         }
+
 
         @Override
         public boolean shouldOverrideUrlLoading(WebView view, String url) {

@@ -6,16 +6,12 @@ import android.annotation.TargetApi;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.graphics.Bitmap;
-import android.graphics.drawable.BitmapDrawable;
-import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
-import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -26,9 +22,8 @@ import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
+
 import com.google.gson.Gson;
-import com.squareup.picasso.Picasso;
-import com.squareup.picasso.Target;
 
 import br.com.mybinuvem.app.helper.HttpRequest;
 import br.com.mybinuvem.app.helper.WebHttpRequest;
@@ -81,7 +76,12 @@ public class LoginActivity extends AppCompatActivity {
             @Override
             public boolean onEditorAction(TextView textView, int id, KeyEvent keyEvent) {
                 if (id == R.id.login || id == EditorInfo.IME_NULL) {
-                    attemptLogin();
+
+                    try {
+                        attemptLogin();
+                    }catch (Exception ex){
+                        Toast.makeText(context,"Falha no login", Toast.LENGTH_SHORT).show();
+                    }
                     return true;
                 }
                 return false;
@@ -92,7 +92,12 @@ public class LoginActivity extends AppCompatActivity {
         mEmailSignInButton.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View view) {
-                attemptLogin();
+
+                try {
+                    attemptLogin();
+                }catch (Exception ex){
+                    Toast.makeText(context,"Falha no login", Toast.LENGTH_SHORT).show();
+                }
             }
         });
 
@@ -111,7 +116,7 @@ public class LoginActivity extends AppCompatActivity {
         final View mainLayout = findViewById(R.id.mainLayout);
 
 
-
+/*
         if(!logoEmpresa.isEmpty()){
 
             Target target = new Target() {
@@ -135,7 +140,7 @@ public class LoginActivity extends AppCompatActivity {
                     .load(logoEmpresa)
                     .into(target);
 
-        }
+        }*/
     }
 
 
